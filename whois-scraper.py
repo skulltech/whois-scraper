@@ -1,6 +1,7 @@
 from lxml import html
 from PIL import Image
 import requests
+import urllib.request
 
 def enlarge_image(image_file):
 	image = Image.open(image_file)
@@ -14,7 +15,26 @@ def extract_text(image_file):
 
 	# Use Tesseract to extract text from the enlarged image. Then Return it.
 
-domain = 'speedtest.net'
+def fix_emails(whois_data, image_urls):
+	count = 0
 
-page = requests.get('http://www.whois.com/whois/{}'.format(domain))
-tree = html.fromstring(page.content)
+	for index, item in enumerate(whois_data):
+		if item.startswith('@'):
+			with urllib.request.urlopen(image_urls[count]) as response:
+				email_username = extract_text(image_urls[count])
+			
+			whois_data[index-1:index+1] = [whois_data[index-1] + email_username + whois_data[index]]
+			count += 1
+
+	return whois_data
+
+def scrape_whois(domain):
+	domain = 'speedtest.net'
+
+	page = requests.get('http://www.whois.com/whois/{}'.format(domain))
+	tree = html.fromstring(page.content)
+
+	registrar_data = tree.xpath('//*[@id="registrarData"]/text()')
+	registrar_images = list(map(lambda x: 'http://www.whois.com' + x, tree.xpath('//*[@id="registrarData"]/img/@src')))
+	registry_data = tree.xpath('//*[@id="registryData"]/text()')
+	registry_images = list(map(lambda x: 'http://www.whois.com' + x, tree.xpath('//*[@id="registryData"]/img/@src')))
