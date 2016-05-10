@@ -21,7 +21,7 @@ def fix_emails(whois_data, image_urls):
 	for index, item in enumerate(whois_data):
 		if item.startswith('@'):
 			with urllib.request.urlopen(image_urls[count]) as response:
-				email_username = extract_text(image_urls[count])
+				email_username = extract_text(response)
 			
 			whois_data[index-1:index+1] = [whois_data[index-1] + email_username + whois_data[index]]
 			count += 1
